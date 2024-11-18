@@ -1,7 +1,7 @@
 name: Auto Merge
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - labeled
       - unlabeled
@@ -51,14 +51,7 @@ jobs:
 
             if (approvedReviews.length < requiredApprovals) {
               core.setFailed(`PR requires at least ${requiredApprovals} approval(s).`);
-            } else {
-              // Re-run the workflow by adding a label
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                labels: ['approved']
-              });
+            }
 
       - name: Ensure PR is mergeable
         id: mergeable
