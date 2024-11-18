@@ -22,6 +22,7 @@ jobs:
       contents: read
       pull-requests: write
       actions: write  # Added actions: write to ensure proper permissions
+      merge: write
 
     steps:
       - name: Checkout
@@ -30,7 +31,7 @@ jobs:
       - name: Ensure PR is mergeable
         id: mergeable
         env:
-          GH_TOKEN: ${{ github.token }}  # Default token provided by GitHub Actions
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # Use PAT
         run: |
           pr_details=$(gh pr view ${{ github.event.pull_request.number }} --json mergeable --jq .)
           echo "PR Details: $pr_details"
@@ -57,7 +58,7 @@ jobs:
         id: approvals
         uses: actions/github-script@v6
         with:
-          github-token: ${{ github.token }}
+          github-token: ${{ github.token }}  # Pass the GitHub token here
           script: |
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
@@ -78,7 +79,7 @@ jobs:
       - name: Automerge Script
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          github-token: ${{ github.token }}  # Pass the GitHub token here
           script: |
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
