@@ -1,5 +1,3 @@
 print(l ,  hello o neha !!")   
-sdfa
 
- 
 
