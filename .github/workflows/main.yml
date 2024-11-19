@@ -1,7 +1,7 @@
 name: Auto Merge
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - labeled
       - unlabeled
@@ -14,33 +14,39 @@ on:
   pull_request_review:
     types:
       - submitted
+  check_suite:
+    types:
+      - completed
+  status: {}
 
 jobs:
   automerge:
     runs-on: ubuntu-latest
+    if: ${{ always() }}  # Ensure this job runs after any change in PR state
+
     permissions:
       contents: read
       pull-requests: write
-      actions: write  # Added actions: write to ensure proper permissions
-      merge: write
+      actions: write
+      checks: read
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Ensure PR is mergeable
         id: mergeable
         env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # Use PAT
+          GH_TOKEN: ${{ github.token }}
         run: |
           pr_details=$(gh pr view ${{ github.event.pull_request.number }} --json mergeable --jq .)
           echo "PR Details: $pr_details"
-          
-          # Fetch only the mergeable field from the PR details
+
+          # Fetch the mergeable field
           mergeable=$(echo "$pr_details" | jq -r .mergeable)
+
           echo "Mergeable state: $mergeable"
-          
-          # Handle the mergeable value
+
           if [ "$mergeable" = "MERGEABLE" ]; then
             echo "Pull request is mergeable."
           elif [ "$mergeable" = "false" ]; then
@@ -58,28 +64,32 @@ jobs:
         id: approvals
         uses: actions/github-script@v6
         with:
-          github-token: ${{ github.token }}  # Pass the GitHub token here
+          github-token: ${{ github.token }}
           script: |
+            // Fetch the reviews of the pull request
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.payload.pull_request.number
             });
 
-            // Filter reviews for "APPROVED" state
-            const approvedReviews = reviews.filter(r => r.state === "APPROVED");
-            const requiredApprovals = 1; // Adjust based on repository rules
+            // Filter reviews that have been "APPROVED"
+            const approvedReviews = reviews.filter(review => review.state === "APPROVED");
+            const requiredApprovals = 1;  // Adjust based on your repo rules
 
             console.log(`Found ${approvedReviews.length} approvals.`);
 
+            // If the number of approved reviews is less than required, fail the job
             if (approvedReviews.length < requiredApprovals) {
               core.setFailed(`PR requires at least ${requiredApprovals} approval(s).`);
+            } else {
+              console.log(`Required approval(s) granted.`);
             }
 
       - name: Automerge Script
         uses: actions/github-script@v6
         with:
-          github-token: ${{ github.token }}  # Pass the GitHub token here
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           script: |
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
@@ -87,7 +97,6 @@ jobs:
               pull_number: context.payload.pull_request.number
             });
 
-            // Check mergeable state in the PR data (mergeable is a boolean)
             if (pr.mergeable_state === "dirty") {
               console.log("Pull request has merge conflicts.");
               return;
@@ -99,7 +108,6 @@ jobs:
               console.log("Mergeable state:", pr.mergeable_state);
             }
 
-            // Proceed to merge if the PR is mergeable
             if (pr.mergeable) {
               await github.rest.pulls.merge({
                 owner: context.repo.owner,
