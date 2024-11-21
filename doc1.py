@@ -56,10 +56,10 @@ def check_for_todo():
 
 if __name__ == "__main__":
     # Check if a README.md file exists
-    check_file_exists('README.md')
+    check_file_exists('checks.yml')
 
     # Check if the requirements.txt file exists
-    check_file_exists('requirements.txt')
+    check_file_exists('main.yml')
 
     # Run syntax check
     check_syntax()
