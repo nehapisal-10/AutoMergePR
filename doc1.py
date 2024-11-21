@@ -55,9 +55,7 @@ def check_for_todo():
         print("No TODO comments found.")
 
 if __name__ == "__main__":
-    # Check if a README.md file exists
-    check_file_exists('checks.yml')
-
+    
     # Check if the requirements.txt file exists
     check_file_exists('main.yml')
 
