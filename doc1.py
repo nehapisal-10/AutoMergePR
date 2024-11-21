@@ -4,7 +4,7 @@ import subprocess
 
 # Function to check if a specific file exists in the repository
 def check_file_exists(file_name):
-    if not os.path.isfile(file_name):
+    if not os.path.isfile(file_name): 
         print(f"Error: {file_name} is missing.")
         sys.exit(1)  # Exit with error code 1 if file is missing
     else:
