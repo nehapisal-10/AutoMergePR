@@ -45,6 +45,7 @@ jobs:
         
   automerge:
     runs-on: ubuntu-latest
+    needs: build  # Ensures automerge runs only after the build job is successful
     permissions:
       contents: read       # Read repository content
       pull-requests: write # Write access to PRs (to merge them)
