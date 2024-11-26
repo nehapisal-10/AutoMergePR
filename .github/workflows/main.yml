@@ -4,6 +4,11 @@ on:
     workflows: ["Build"]   # Name of the workflow that should trigger this one
     types:
       - completed 
+  check_suite:
+    types:
+      - completed  # Trigger the workflow when the check suite finishes
+    status: success  # The workflow will trigger only when the check suite is successful
+
 jobs:
   automerge:
       runs-on: ubuntu-latest
