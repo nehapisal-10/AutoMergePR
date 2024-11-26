@@ -1,10 +1,6 @@
 name: Auto Merge
 
 on:
-  workflow_run:
-    workflows: ["Build"]
-    types:
-      - completed
   workflow_dispatch:  # This allows manual trigger via API or GitHub UI
     inputs:
       pr_number:
@@ -23,18 +19,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+        
       - name: Check PR details
         uses: actions/github-script@v6
         with:
-          script: |
-            // Get PR number from the inputs or from the pull request context
-            const pr_number = ${{ github.event.inputs.pr_number }} || ${{ github.event.pull_request && github.event.pull_request.number }};
-            if (pr_number) {
+         script: |
+           const pr_number = '${{ github.event.inputs.pr_number }}'; // Pass pr_number as a string from the context
+           if (pr_number) {
               console.log(`PR number: ${pr_number}`);
-            } else {
-              console.log('This workflow is not triggered by a pull request event.');
-            }
+           } else {
+              console.log('PR number not found, this workflow might not have been triggered by a pull request event.');
+           }
             
       - name: Ensure PR is mergeable
         id: mergeable
