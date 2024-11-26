@@ -23,17 +23,12 @@ jobs:
         - name: Checkout code
           uses: actions/checkout@v3
 
-        - name: Get PR number
-          uses: actions/github-script@v6
-          with:
-            script: |
-              const prNumber = context.payload.pull_request ? context.payload.pull_request.number : null;
-              if (prNumber) {
-                console.log(`PR Number: ${prNumber}`);
-              } else {
-                console.log('No PR number available in this context.');
-              }
-            
+        - name: Get PR Number from Build Workflow
+          run: |
+            echo "PR Number from Build workflow: ${{ needs.build.outputs.pr_number }}"
+            # Automate the merge process (use GitHub API or CLI)
+            # You can use the PR number in your automation logic here
+              
         - name: Ensure Required Approvals
           id: approvals
           uses: actions/github-script@v6
