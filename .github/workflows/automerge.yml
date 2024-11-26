@@ -5,12 +5,7 @@ on:
     workflows: ["Build"]
     types:
       - completed
-  workflow_dispatch:  # This allows manual trigger via API or GitHub UI
-    inputs:
-      pr_number:
-        description: 'Pull Request Number'
-        required: true
-        type: integer
+  workflow_dispatch:  # Allows manual trigger via GitHub UI or API (optional)
 
 jobs:
   automerge:
