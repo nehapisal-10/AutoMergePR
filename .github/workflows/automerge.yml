@@ -78,6 +78,26 @@ jobs:
             if (approvedReviews.length < requiredApprovals) {
               core.setFailed(`PR requires at least ${requiredApprovals} approval(s).`);
             }
+            
+      - name: Check if All Checks Passed
+        id: checks
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: statusChecks } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+             ref: `refs/pull/${{ github.event.inputs.pr_number }}/merge`
+            });
+
+             const failedChecks = statusChecks.check_runs.filter(check => check.conclusion !== 'success');
+             if (failedChecks.length > 0) {
+               console.log(`Found failed checks: ${failedChecks.map(check => check.name).join(", ")}`);
+               core.setFailed(`The following checks failed: ${failedChecks.map(check => check.name).join(", ")}`);
+             } else {
+               console.log('All checks have passed.');
+             }
       - name: Automerge Script
         uses: actions/github-script@v6
         with:
