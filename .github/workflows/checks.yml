@@ -25,12 +25,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Get PR Number
-        id: pr_number
-        run: |
-          # Extract the PR number from the GitHub reference (GITHUB_REF)
-          PR_NUMBER=$(echo ${GITHUB_REF} | sed 's/refs\/pull\/\([0-9]*\)\/merge/\1/')
-          echo "::set-output name=pr_number::$PR_NUMBER"
+      - name: Get PR number
+        uses: actions/github-script@v6
+        with:
+            script: |
+              const prNumber = context.payload.pull_request ? context.payload.pull_request.number : null;
+              if (prNumber) {
+                console.log(`PR Number: ${prNumber}`);
+              } else {
+                console.log('No PR number available in this context.');
+              }
 
       - name: SetUp Python
         uses: actions/setup-python@v3
