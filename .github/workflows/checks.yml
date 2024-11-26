@@ -24,7 +24,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
- 
+
+      - name: Get PR Number
+        id: pr_number
+        run: |
+          # Extract the PR number from the GitHub reference (GITHUB_REF)
+          PR_NUMBER=$(echo ${GITHUB_REF} | sed 's/refs\/pull\/\([0-9]*\)\/merge/\1/')
+          echo "::set-output name=pr_number::$PR_NUMBER"
+
       - name: SetUp Python
         uses: actions/setup-python@v3
         with:
