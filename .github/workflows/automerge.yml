@@ -11,6 +11,7 @@ on:
         description: 'Pull Request Number'
         required: true
         type: integer
+
 jobs:
   automerge:
     runs-on: ubuntu-latest
@@ -22,29 +23,32 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Check PR details
         uses: actions/github-script@v6
         with:
-         script: |
-           const pr_number = '${{ github.event.inputs.pr_number }}'; // Pass pr_number as a string from the context
-           if (pr_number) {
+          script: |
+            const pr_number = ${{ github.event.inputs.pr_number || github.event.pull_request.number }};
+            if (pr_number) {
               console.log(`PR number: ${pr_number}`);
-           } else {
-              console.log('PR number not found, this workflow might not have been triggered by a pull request event.');
-           }
-            
+            } else {
+              console.log('This workflow is not triggered by a pull request event.');
+            }
+      - name: Check if PR merged
+        if: github.event.pull_request.merged == true
+        run: |
+          echo "The PR was merged"
       - name: Ensure PR is mergeable
         id: mergeable
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Default token provided by GitHub Actions
         run: |
-          # Fetch PR details to check mergeability
           pr_details=$(gh pr view ${{ github.event.inputs.pr_number }} --json mergeable --jq .)
           echo "PR Details: $pr_details"
+          # Fetch only the mergeable field from the PR details
           mergeable=$(echo "$pr_details" | jq -r .mergeable)
           echo "Mergeable state: $mergeable"
-          
+          # Handle the mergeable value
           if [ "$mergeable" = "MERGEABLE" ]; then
             echo "Pull request is mergeable."
           elif [ "$mergeable" = "false" ]; then
@@ -57,7 +61,24 @@ jobs:
             echo "Unexpected mergeable state: $mergeable"
             exit 1
           fi
-
+      - name: Ensure Required Approvals
+        id: approvals
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ github.event.inputs.pr_number }}
+            });
+            // Filter reviews for "APPROVED" state
+            const approvedReviews = reviews.filter(r => r.state === "APPROVED");
+            const requiredApprovals = 1; // Adjust based on repository rules
+            console.log(`Found ${approvedReviews.length} approvals.`);
+            if (approvedReviews.length < requiredApprovals) {
+              core.setFailed(`PR requires at least ${requiredApprovals} approval(s).`);
+            }
       - name: Automerge Script
         uses: actions/github-script@v6
         with:
@@ -68,7 +89,6 @@ jobs:
               repo: context.repo.repo,
               pull_number: ${{ github.event.inputs.pr_number }}
             });
-            
             // Check mergeable state in the PR data (mergeable is a boolean)
             if (pr.mergeable_state === "dirty") {
               console.log("Pull request has merge conflicts.");
@@ -78,4 +98,16 @@ jobs:
               console.log("PR is clean and ready for merging.");
             } else {
               console.log("Mergeable state:", pr.mergeable_state);
+            }
+            // Proceed to merge if the PR is mergeable
+            if (pr.mergeable) {
+              await github.rest.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: ${{ github.event.inputs.pr_number }},
+                merge_method: "squash",
+                commit_title: "Auto-merged by GitHub Actions"
+              });
+            } else {
+              console.log("Pull request is not mergeable.");
             }
