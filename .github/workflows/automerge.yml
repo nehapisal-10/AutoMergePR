@@ -1,8 +1,7 @@
 name: Auto Merge
-
 on:
   workflow_run:
-    workflows: ["Build and Test"]
+    workflows: ["Build"]
     types:
       - completed
   workflow_dispatch:  # This allows manual trigger via API or GitHub UI
