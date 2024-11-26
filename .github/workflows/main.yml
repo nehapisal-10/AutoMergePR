@@ -1,9 +1,11 @@
 name: Automerge
 on:
   workflow_run:
-    workflows: ["Build"]   # Name of the workflow that should trigger this one
+    workflows: 
+      - "Build"  # Name of the workflow that should trigger this one
     types:
-      - completed 
+      - completed  # Trigger the workflow when the 'Build' workflow completes
+
   check_suite:
     types:
       - completed  # Trigger the workflow when the check suite finishes
