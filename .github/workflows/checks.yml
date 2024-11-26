@@ -5,6 +5,11 @@ on:
     types:
       - completed
   workflow_dispatch:  # Allows manual trigger via GitHub UI or API (optional)
+    inputs:
+      pr_number:
+        description: 'Pull Request Number'
+        required: true
+        type: integer
 
 jobs:
   build:
