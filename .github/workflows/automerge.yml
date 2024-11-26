@@ -28,7 +28,9 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr_number = ${{ github.event.inputs.pr_number || github.event.pull_request.number }};
+            // Accessing the PR number using GitHub Actions context variables
+            const pr_number = '${{ github.event.inputs.pr_number || github.event.pull_request?.number }}';
+            
             if (pr_number) {
               console.log(`PR number: ${pr_number}`);
             } else {
