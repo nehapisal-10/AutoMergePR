@@ -1,9 +1,5 @@
 name: Build
 on:
-  workflow_run:
-    workflows: ["Main Workflow"]
-    types:
-      - completed
   workflow_dispatch:  # Allows manual trigger via GitHub UI or API (optional)
     inputs:
       pr_number:
@@ -37,6 +33,7 @@ jobs:
 
   trigger_automerge:
     runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Debug GitHub Context (to check variables)
         run: |
