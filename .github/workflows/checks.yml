@@ -1,9 +1,5 @@
 name: Build
 on:
-  workflow_run:
-    workflows: ["Main Workflow"]
-    types:
-      - completed
   workflow_dispatch:  # This allows manual trigger via API or GitHub UI
     inputs:
       pr_number:
