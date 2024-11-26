@@ -49,7 +49,7 @@ jobs:
           -H "Accept: application/vnd.github.v3+json" \
           https://api.github.com/repos/${{ github.repository }}/actions/workflows/automerge.yml/dispatches \
           -d '{
-                "ref": "refs/heads/${{ github.event.pull_request.head.ref }}", 
+               "ref": "refs/heads/${{ github.head_ref }}", 
                 "inputs": {
                   "pr_number": "${{ github.event.pull_request.number }}"
                 }
