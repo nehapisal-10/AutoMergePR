@@ -66,15 +66,31 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // Fetch the branch protection settings for the default branch
+            const { data: branchProtection } = await github.rest.repos.getBranchProtection({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: context.repo.default_branch
+            });
+
+            // Retrieve the required number of approvals from the protection settings
+            const requiredApprovals = branchProtection.required_pull_request_reviews ? branchProtection.required_pull_request_reviews.approvals : 0;
+            
+            console.log(`Repository requires ${requiredApprovals} approval(s) for pull requests.`);
+
+            // Fetch the reviews for the current pull request
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: ${{ github.event.inputs.pr_number }}
+              pull_number: ${{ github.event.pull_request.number }}
             });
-            // Filter reviews for "APPROVED" state
+
+            // Filter reviews to get only approved reviews
             const approvedReviews = reviews.filter(r => r.state === "APPROVED");
-            const requiredApprovals = 1; // Adjust based on repository rules
-            console.log(`Found ${approvedReviews.length} approvals.`);
+
+            console.log(`Found ${approvedReviews.length} approval(s).`);
+
+            // If the number of approved reviews is less than the required approvals, fail the check
             if (approvedReviews.length < requiredApprovals) {
               core.setFailed(`PR requires at least ${requiredApprovals} approval(s).`);
             }
