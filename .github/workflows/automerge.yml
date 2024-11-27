@@ -112,8 +112,7 @@ jobs:
               core.setFailed(`The Build workflow failed. Conclusion: ${latestBuildRun.conclusion}`);
               return;
             }
-
-      console.log('Build workflow has passed successfully.');
+            
       - name: Automerge Script
         if: success()  # Only run this step if all previous steps were successful
         uses: actions/github-script@v6
