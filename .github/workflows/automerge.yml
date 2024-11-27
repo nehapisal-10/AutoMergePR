@@ -64,7 +64,7 @@ jobs:
         id: check_build
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           script: |
             // Get the list of workflows to find the ID for 'build.yml'
             const { data: workflows } = await github.rest.actions.listWorkflows({
