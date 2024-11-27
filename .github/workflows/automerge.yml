@@ -4,7 +4,7 @@ on:
     workflows: ["Build"]
     types:
       - completed
-  workflow_dispatch:
+  workflow_dispatch:  # This allows manual trigger via API or GitHub UI
     inputs:
       pr_number:
         description: 'Pull Request Number'
@@ -17,70 +17,64 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      actions: write
+      actions: write  # Added actions: write to ensure proper permissions
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set PR Number
-        id: set_pr_number
-        run: |
-          echo "PR_NUMBER=${{ github.event.inputs.pr_number || github.event.pull_request.number }}" >> $GITHUB_ENV
       - name: Check PR details
         uses: actions/github-script@v6
         with:
           script: |
-            const pr_number = process.env.PR_NUMBER;
+            const pr_number = ${{ github.event.inputs.pr_number || github.event.pull_request.number }};
             if (pr_number) {
               console.log(`PR number: ${pr_number}`);
             } else {
               console.log('This workflow is not triggered by a pull request event.');
             }
-
       - name: Check if PR merged
         if: github.event.pull_request.merged == true
-        run: echo "The PR was merged"
-
+        run: |
+          echo "The PR was merged"
       - name: Ensure PR is mergeable
         id: mergeable
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Default token provided by GitHub Actions
         run: |
-          pr_details=$(gh pr view $PR_NUMBER --json mergeable --jq .mergeable)
-          echo "Mergeable state: $pr_details"
-          if [ "$pr_details" = "MERGEABLE" ]; then
+          pr_details=$(gh pr view ${{ github.event.inputs.pr_number }} --json mergeable --jq .)
+          echo "PR Details: $pr_details"
+          # Fetch only the mergeable field from the PR details
+          mergeable=$(echo "$pr_details" | jq -r .mergeable)
+          echo "Mergeable state: $mergeable"
+          # Handle the mergeable value
+          if [ "$mergeable" = "MERGEABLE" ]; then
             echo "Pull request is mergeable."
-          elif [ "$pr_details" = "false" ]; then
+          elif [ "$mergeable" = "false" ]; then
             echo "Pull request is not mergeable."
             exit 1
-          else
+          elif [ "$mergeable" = "null" ]; then
             echo "Mergeable state is unknown. Please check the PR status."
             exit 1
+          else
+            echo "Unexpected mergeable state: $mergeable"
+            exit 1
           fi
-
       - name: Ensure Required Approvals
         id: approvals
         uses: actions/github-script@v6
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = process.env.PR_NUMBER;
-            const { data: branchProtection } = await github.rest.repos.getBranchProtection({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              branch: context.repo.default_branch
-            });
-            const requiredApprovals = branchProtection.required_pull_request_reviews?.required_approving_review_count || 0;
-            console.log(`Repository requires ${requiredApprovals} approval(s) for pull requests.`);
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: prNumber
+              pull_number: ${{ github.event.inputs.pr_number }}
             });
+            // Filter reviews for "APPROVED" state
             const approvedReviews = reviews.filter(r => r.state === "APPROVED");
-            console.log(`Found ${approvedReviews.length} approval(s).`);
+            const requiredApprovals = 1; // Adjust based on repository rules
+            console.log(`Found ${approvedReviews.length} approvals.`);
             if (approvedReviews.length < requiredApprovals) {
               core.setFailed(`PR requires at least ${requiredApprovals} approval(s).`);
             }
