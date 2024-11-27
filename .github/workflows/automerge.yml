@@ -60,11 +60,12 @@ jobs:
             echo "Unexpected mergeable state: $mergeable"
             exit 1
           fi
+
       - name: Ensure Required Approvals
         id: approvals
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           script: |
             // Fetch the branch protection settings for the default branch
             const { data: branchProtection } = await github.rest.repos.getBranchProtection({
