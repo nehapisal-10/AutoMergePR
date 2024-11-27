@@ -77,7 +77,7 @@ jobs:
             });
 
             // Retrieve the required number of approvals from the protection settings
-            const requiredApprovals = branchProtection.required_pull_request_reviews ? branchProtection.required_pull_request_reviews.approvals : 0;
+            const requiredApprovals = branchProtection.required_pull_request_reviews?.required_approving_review_count || 0;
             console.log(`Repository requires ${requiredApprovals} approval(s) for pull requests.`);
             
             // Fetch the reviews for the current pull request
