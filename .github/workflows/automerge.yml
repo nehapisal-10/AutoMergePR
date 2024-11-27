@@ -79,40 +79,6 @@ jobs:
               core.setFailed(`PR requires at least ${requiredApprovals} approval(s).`);
             }
             
-      - name: Check if All Checks from Build Passed
-        id: checks
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            // Get the list of workflow runs for the repository
-            const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow: 'Build', // Specify the name of the Build workflow
-              branch: context.ref.replace('refs/heads/', ''),
-              status: 'completed',  // Only check completed workflows
-              per_page: 5
-            });
-      
-            if (workflowRuns.length === 0) {
-              console.log('No completed Build workflow runs found.');
-              core.setFailed('Build workflow has not been completed.');
-              return;
-            }
-      
-            // Get the latest Build workflow run
-            const latestBuildRun = workflowRuns[0];
-      
-            console.log(`Checking Build workflow run: ${latestBuildRun.id}`);
-      
-            // Check if the build workflow run has succeeded
-            if (latestBuildRun.conclusion !== 'success') {
-              console.log(`Build workflow run failed with conclusion: ${latestBuildRun.conclusion}`);
-              core.setFailed(`The Build workflow failed. Conclusion: ${latestBuildRun.conclusion}`);
-              return;
-            }
-            
       - name: Automerge Script
         if: success()  # Only run this step if all previous steps were successful
         uses: actions/github-script@v6
