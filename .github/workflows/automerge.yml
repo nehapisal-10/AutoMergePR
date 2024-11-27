@@ -44,7 +44,7 @@ jobs:
             const { data: workflowRuns } = await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow: 'Build', // Specify the name of the Build workflow
+              workflow: 'build.yml', // Specify the name of the Build workflow
               branch: context.ref.replace('refs/heads/', ''),
               status: 'completed',  // Only check completed workflows
               per_page: 5
