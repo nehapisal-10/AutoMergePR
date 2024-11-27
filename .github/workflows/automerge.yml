@@ -99,6 +99,7 @@ jobs:
                console.log('All checks have passed.');
              }
       - name: Automerge Script
+        if: success()  # Only run this step if all previous steps were successful
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
